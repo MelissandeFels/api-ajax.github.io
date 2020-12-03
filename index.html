@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJAX Melissande</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body id="body">
+    <h1>API AJAX</h1>
+
+    <h2>Tableau : manipuler des données JSON avec AJAX</h2>
+    <button type="button" id="afficher">Afficher</button>
+    <button type="button" id="vider">Vider</button>
+    <button id="add">ADD</button>
+
+    <table id="table_id" class="display">
+        <thead>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">userId</th>
+                <th scope="col">Title</th>
+                <th scope="col">Body</th>
+            </tr>
+        </thead>
+        <tbody id="validate">
+
+            <div id="popup">
+                <div id="popup-content">
+                    <img src="close.png" alt="close icon" class="close">
+                    <h3>Add data</h3>
+                    <input type="text" placeholder="Id" id="id" name="id" required><br><br>
+                    <input type="text" placeholder="userId" id="userId" name="userId" required><br><br>
+                    <input type="text" placeholder="Title" id="title" name="title" required><br><br>
+                    <input type="text" placeholder="Body" id="buddy" name="body" required><br><br>
+                    <button class="button" type="submit" onclick="insertInfo(this)">OK</button>
+                </div>
+            </div>
+
+        </tbody>
+
+    <!--NOTE : pour plus tard : faire un edit row pour modif ligne en js + trouver un moyen de suppression de ligne ajouter-->
+
+    </table>
+    <script type="text/javascript">
+
+        /** VARIABLES **/
+
+        var validate = document.getElementById('validate');
+
+        var compteur = 0; //remet le compteur à 0 du bouton Afficher : tableau vide
+
+        var boutonAfficher = document.getElementById('afficher'); //récupération de l'id <button> Afficher
+        boutonAfficher.onclick = showInfo; //évènement 'click' sur le bouton Afficher : détail une information POST par son id
+
+        var boutonVider = document.getElementById('vider'); //récupération de l'id <button> Vider
+        boutonVider.onclick = emptyTable; //évènement 'click' sur le bouton Vider : vide le tableau
+
+        //Action tableau rendu vide au click du <button>Vider</button>
+        function emptyTable() {
+            var table = document.getElementById("validate");
+            table.innerHTML = "";
+        }
+
+
+        /** 1) DISPLAY ARRAY JSON : 'GET' POSTS **/
+
+        //Afficher la liste de tous les "Posts" au chargement de la page à partir de l'API
+        function displayPosts(posts) {
+            posts.forEach(function (post) {
+                var getEmployee = document.createElement("tr");
+                getEmployee.innerHTML = `
+        <tr>
+            <td style="text-align:center;">${post.id}</td>
+            <td style="text-align:center;">${post.userId}</td>
+            <td style="text-align:center;">${post.title}</td>
+            <td style="text-align:center;">${post.body}</td>
+            <button id="supp${post.id}">SUP</button>
+        </tr>
+        `;
+                validate.appendChild(getEmployee);
+
+                var boutonSupp = document.getElementById('supp' + post.id); //Evènement 'click' du bouton SUP
+                boutonSupp.addEventListener('click', function () {
+                   suppInfo(post.id);
+                });
+            });
+        }
+        //Méthode pour récupérer les Posts
+        function getInformationPosts() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'https://jsonplaceholder.typicode.com/posts');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && this.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    displayPosts(response);
+                } else {
+                    emptyTable();
+                }
+            };
+            xhr.send();
+        }
+        getInformationPosts();
+
+
+        /** 2) DISPLAY 1 POST : 'GET' POSTID **/
+
+        //Afficher un "Post" au click (bouton Afficher) {postId}
+        function buttonDisplay(data) {
+            var getEmployee = document.createElement("tr");
+            getEmployee.innerHTML = `
+        <tr>
+            <td style="text-align:center;">${data.id}</td>
+            <td style="text-align:center;">${data.userId}</td>
+            <td style="text-align:center;">${data.title}</td>
+            <td style="text-align:center;">${data.body}</td>
+            <button id="supp${data.id}">SUP</button>
+        </tr>
+        `;
+            validate.appendChild(getEmployee);
+
+            var boutonSupp = document.getElementById('supp' + data.id); //Evènement 'click' du bouton SUP
+            boutonSupp.addEventListener('click', function () {
+                suppInfo(data.id);
+            });
+            compteur++;
+        }
+        //Méthode pour récupérer un Post 'id' au click <button>Afficher</button>
+        function showInfo(data) {
+            if (compteur > 0) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', 'https://jsonplaceholder.typicode.com/posts/' + compteur);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && this.status === 200) {
+                        var result = JSON.parse(xhr.responseText);
+                        buttonDisplay(result);
+                    }
+                };
+                xhr.send();
+            } else {
+                compteur++;
+            }
+        }
+
+
+        /** 3) ADD 1 POST : 'POST' POSTID **/
+
+        var boutonAjout = document.getElementById('add'); //Evènement 'click' du bouton ADD
+        boutonAjout.addEventListener('click', function () { //affichage formulaire
+            document.querySelector('#popup').style.display = 'flex';
+        });
+
+        document.querySelector('.close').addEventListener('click', function () { //Evènement bouton 'fermer'
+            document.querySelector('#popup').style.display = 'none';
+        });
+        
+        function insertInfo(insertData) {
+            var id = document.getElementById('id').value;
+            var userId = document.getElementById('userId').value;
+            var title = document.getElementById('title').value;
+            var body = document.getElementById('buddy').value;
+
+            var getEmployee = document.createElement("tr");
+            getEmployee.innerHTML = `
+        <tr>
+            <td style="text-align:center;">${id}</td>
+            <td style="text-align:center;">${userId}</td>
+            <td style="text-align:center;">${title}</td>
+            <td style="text-align:center;">${body}</td>
+        </tr>
+        `;
+            validate.appendChild(getEmployee);
+        }
+        //Méthode pour ajouter un Post au click <button>ADD</button>
+        function addInfo(insertData) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'https://jsonplaceholder.typicode.com/posts');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && this.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    insertInfo(response);
+                }
+            };
+            xhr.send(JSON.stringify(insertData));
+        }
+
+
+        /** 4) DELETE 1 POST : 'DELETE' POSTID **/
+
+        //Supprime une ligne du tableau
+        function buttonSupp(id) {
+            var array = document.getElementById("validate");
+            var ligne = array.rows;
+
+            for (var i = 0; i < ligne.length; i++) {
+                var cellid = ligne[i].cells[0];
+                if (cellid.innerText == id) {
+                    array.deleteRow(i);
+                }
+            }
+        }
+        //Méthode pour supprimer un Post 'id' au click <button>SUP</button>
+        function suppInfo(id) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('DELETE', 'https://jsonplaceholder.typicode.com/posts/' + id);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && this.status === 200) {
+                    var result = JSON.parse(xhr.responseText);
+                    buttonSupp(id);
+                }
+            };
+            xhr.send();
+        }
+
+    </script>
+</body>
+
+</html>
